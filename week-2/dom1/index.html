@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>Todo List</h1>
+    <div id="todo-1">
+        <h4>1. Tase Class</h4>
+        <button onclick="deletetodo(1)">Delete</button>
+    </div>
+    <div id="todo-2">
+        <h4>2. Go To GYM</h4>
+        <button onclick="deletetodo(2)">Delete</button>
+    </div>
+    <div id="todo-3">
+        <h4>3. Sleep</h4>
+        <button onclick="deletetodo(3)">Delete</button>
+    </div>
+    <div id="todo-4">
+        <h4>3. Sleep</h4>
+        <button onclick="deletetodo(4)">Delete</button>
+    </div>
+    <div id="todo-5">
+        <h4>3. Sleep</h4>
+        <button onclick="deletetodo(5)">Delete</button>
+    </div>
+
+    <div>
+        <input type="text">
+        <button>Add TODO</button>
+    </div>
+    <script>
+
+      function  deletetodo(index){
+       const element = document.getElementById("todo-"+index);
+       element.parentNode.removeChild(element)
+      }
+
+        // let t = 0;
+        // function inc() {
+        //     let list = document.querySelectorAll("h4")[1]
+        //     list.innerHTML = t
+        //     t++
+        // }
+        // setInterval(inc, 1000)
+
+
+
+    </script>
+</body>
+
+</html>

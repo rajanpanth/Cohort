@@ -1,0 +1,37 @@
+<html>
+
+<body>
+    <div class="yes">
+        <h1>Todo List</h1>
+    </div>
+
+    <input type="text">
+    </input>
+    <button onclick="addTodo()">
+        add todo
+    </button>
+    <script>
+
+        let ctr = 1;
+
+        function deleteTodo(ctr) {
+            let element = document.getElementById(ctr);
+            document.querySelector(".yes").removeChild(element);
+        }
+
+        function addTodo() {
+            let inputEl = document.querySelector("input");
+            let value = inputEl.value;
+
+            let newdiv = document.createElement("div");
+            newdiv.setAttribute("id", ctr)
+            ctr++;
+            newdiv.innerHTML = "<div>" + value + '</div> <button onclick = "deleteTodo (' + (ctr - 1) + ')" >Delete</button>';
+            document.querySelector(".yes").appendChild(newdiv)
+
+        }
+
+    </script>
+</body>
+
+</html>
