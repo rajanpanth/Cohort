@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.6/axios.min.js"></script>
+</head>
+
+<body>
+  <div id="posts"></div>
+  <button onClick="getRecentPost()">Fetch latest Posts</button>
+  <script>
+    //async await is just syncatactic sugar for .then syntax
+    //AJAX => Asynchronous JSON and XML
+    async function getRecentPost() {
+      const res = await axios.get("https://jsonplaceholder.typicode.com/posts");
+      const arr = res.data;
+      for (let i = 0; i < arr.length; i++) {
+        document.getElementById("posts").innerHTML += ("<div>" + arr[i].body + "</div>");
+      }
+
+    }
+  </script>
+</body>
+
+</html>
