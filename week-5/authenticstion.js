@@ -18,6 +18,10 @@ const users = [];
 //     return token;
 // }
 
+app.get("/", function(req, res){
+    res.sendFile(__dirname + "/public/index.html")
+})
+
 app.post("/signup", function (req, res) {
     const username = req.body.username;
     const password = req.body.password;
@@ -67,10 +71,25 @@ app.post("/signin", function (req, res) {
 
 })
 
+app.use(function(req, res, next){
+
+     const token = req.headers.token;
+    const decodedInformation = jwt.verify(token, JWT_SECRET)
+    req.username = decodedInformation.username;
+    if(decodedInformation){
+        next()
+    }
+    else{
+        res.json({
+            msg: "you are not signed in"
+        })
+    }
+})
+
 app.get("/me", function (req, res) {
     const token = req.headers.token;
     const decodedInformation = jwt.verify(token, JWT_SECRET) //{username: pantharajan0@gmail.com}
-    const username = decodedInformation.username;
+    const username = req.username;
 
     let foundUser = null;
 
