@@ -71,8 +71,7 @@ app.post("/signin", function (req, res) {
 
 })
 
-app.use(function(req, res, next){
-
+function auth(req, res, next){
      const token = req.headers.token;
     const decodedInformation = jwt.verify(token, JWT_SECRET)
     req.username = decodedInformation.username;
@@ -84,13 +83,12 @@ app.use(function(req, res, next){
             msg: "you are not signed in"
         })
     }
-})
+}
 
-app.get("/me", function (req, res) {
-    const token = req.headers.token;
-    const decodedInformation = jwt.verify(token, JWT_SECRET) //{username: pantharajan0@gmail.com}
+app.get("/me", auth,  function (req, res) {
+    // const token = req.headers.token;
+    // const decodedInformation = jwt.verify(token, JWT_SECRET) //{username: pantharajan0@gmail.com}
     const username = req.username;
-
     let foundUser = null;
 
     for (let i = 0; i < users.length; i++) {

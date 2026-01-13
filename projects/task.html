@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.6/axios.min.js"></script>
+
+</head>
+
+<body>
+    <input id="city" type="text" placeholder="enter city">
+    <button onclick="fetchWeather()">Get Weather</button>
+    <h2 id="error" style="color: red;"></h2>
+    <div id="details"></div>
+
+    <script>
+        async function fetchWeather() {
+            const city = document.getElementById("city").value;
+            document.getElementById("error").innerHTML = ""
+            if (!city) {
+                document.getElementById("error").innerHTML = "put the city"
+            }
+
+            let api = "c58666b486c093f5569bc61703c6e3d9"
+            const url = "https://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + api + "&units=metric";
+            let response = await axios.get(url);
+            let data = await response.data;
+
+            document.getElementById("details").innerHTML = "<h1>" + "weather: " + data.weather[0].description + "</h1>" + "<br>" + "<h1>" + "temperature: " + data.main.temp + "degree celcius" + "</h1>" + "<br>" + "<h1>" + "humidity: " + data.main.humidity + "</h1>" + "<br>"
+        }
+
+    </script>
+</body>
+
+</html>

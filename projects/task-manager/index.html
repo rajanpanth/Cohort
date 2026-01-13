@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .input-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .todo-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .todo-item.completed {
+            background-color: #d4edda;
+        }
+        .todo-item.completed .todo-title {
+            text-decoration: line-through;
+        }
+        .todo-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .todo-actions button {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Task Manager</h1>
+    
+    <div class="input-box">
+        <input type="text" id="todoInput" placeholder="Enter task...">
+        <button onclick="addTodo()">Add</button>
+    </div>
+    
+    <div class="filters">
+        <button onclick="filterTodos('all')">All</button>
+        <button onclick="filterTodos('pending')">Pending</button>
+        <button onclick="filterTodos('completed')">Completed</button>
+        <input type="text" id="searchInput" placeholder="Search..." oninput="searchTodos()">
+    </div>
+    
+    <div>Request Count: <span id="requestCount">0</span></div>
+    <br>
+    
+    <div id="todoList"></div>
+
+    <script>
+        let currentFilter = 'all';
+
+        function fetchTodos() {
+            let url = `http://localhost:3000/todos?filter=${currentFilter}`;
+            
+            const searchValue = document.getElementById("searchInput").value;
+            if (searchValue) {
+                url += `&search=${searchValue}`;
+            }
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(todos => {
+                    displayTodos(todos);
+                    updateRequestCount();
+                });
+        }
+
+        function displayTodos(todos) {
+            const todoList = document.getElementById("todoList");
+            todoList.innerHTML = "";
+            
+            if (todos.length === 0) {
+                todoList.innerHTML = "<p>No tasks found</p>";
+                return;
+            }
+            
+            todos.forEach(todo => {
+                const div = document.createElement("div");
+                div.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+                
+                div.innerHTML = `
+                    <span class="todo-title">${todo.title}</span>
+                    <div class="todo-actions">
+                        <button onclick="toggleComplete(${todo.id}, ${!todo.completed})">${todo.completed ? 'Undo' : 'Complete'}</button>
+                        <button onclick="editTodo(${todo.id})">Edit</button>
+                        <button onclick="deleteTodo(${todo.id})">Delete</button>
+                    </div>
+                `;
+                
+                todoList.appendChild(div);
+            });
+        }
+
+        function addTodo() {
+            const input = document.getElementById("todoInput");
+            const title = input.value.trim();
+            
+            if (!title) {
+                alert("Please enter a task");
+                return;
+            }
+            
+            fetch("http://localhost:3000/todos", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title })
+            })
+            .then(response => response.json())
+            .then(() => {
+                input.value = "";
+                fetchTodos();
+            });
+        }
+
+        function toggleComplete(id, completed) {
+            fetch(`http://localhost:3000/todos/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ completed })
+            })
+            .then(() => fetchTodos());
+        }
+
+        function editTodo(id) {
+            const newTitle = prompt("Enter new title:");
+            if (!newTitle) return;
+            
+            fetch(`http://localhost:3000/todos/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: newTitle })
+            })
+            .then(() => fetchTodos());
+        }
+
+        function deleteTodo(id) {
+            if (!confirm("Delete this task?")) return;
+            
+            fetch(`http://localhost:3000/todos/${id}`, {
+                method: "DELETE"
+            })
+            .then(() => fetchTodos());
+        }
+
+        function filterTodos(filter) {
+            currentFilter = filter;
+            fetchTodos();
+        }
+
+        function searchTodos() {
+            fetchTodos();
+        }
+
+        function updateRequestCount() {
+            fetch("http://localhost:3000/requestCount")
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("requestCount").textContent = data.requestCount;
+                });
+        }
+
+        // Load todos on page load
+        fetchTodos();
+    </script>
+</body>
+</html>
