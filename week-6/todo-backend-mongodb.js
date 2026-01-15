@@ -68,7 +68,7 @@ app.get("/todos", auth, function (req, res) {
     const todos = TodoModel.find({ userId: userId });
 
     res.json({
-        todos: todos
+        todos: todos,
     });
 
 });
@@ -80,7 +80,7 @@ function auth(req, res, next) {
         req.userId = decodedData.id;
         next();
     } else {
-        res.status(401).json({ message: "Unauthorized" });
+        res.status(401).json({ message: "Unauthorized token" });
     }
 }
 
