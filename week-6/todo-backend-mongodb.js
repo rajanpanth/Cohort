@@ -1,10 +1,12 @@
 const express = require("express");
 const { UserModel, TodoModel } = require("./db");
 const jwt = require("jsonwebtoken");
-const { default: mongoose } = require("mongoose");
+const mongoose = require("mongoose");
 const JWT_SECRET = "rajan"
+const bcrypt = require("bcrypt");
+const { auth } = require("./auth");
 // const mongoose = require("mongoose");
-mongoose.connect("mongodb+srv://rajanpantha:$$Rajan$$1@rajan.xogqz8j.mongodb.net/");
+mongoose.connect("mongodb+srv://rajanpantha:$$Rajan$$1@rajan.xogqz8j.mongodb.net/todo-app-database");
 
 const app = express();
 app.use(express.json());
@@ -14,9 +16,12 @@ app.post("/signup", async function (req, res) {
     const password = req.body.password;
     const name = req.body.name;
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log(hashedPassword);
+
     await UserModel.create({
         email: email,
-        password: password,
+        password: hashedPassword,
         name: name
     })
 
@@ -29,11 +34,15 @@ app.post("/signin", async function (req, res) {
     const password = req.body.password;
 
     // Find user in the database
-    const user = await UserModel.findOne({ email: email, password: password });
+    const user = await UserModel.findOne({
+        email: email,
+    });
+
+    const passwordMatch = await bcrypt.compare(password, user.password); 
 
     console.log(user);
 
-    if (user) {
+    if (user && passwordMatch) {
         const token = jwt.sign({
             id: user._id.toString()
         }, JWT_SECRET);
@@ -45,12 +54,11 @@ app.post("/signin", async function (req, res) {
     }
 });
 
-
 app.post("/todo", auth, async function (req, res) {
     const userId = req.userId;
     const title = req.body.title;
     const done = req.body.done;
-   await TodoModel.create({
+    await TodoModel.create({
         title: title,
         done: done,
         userId
@@ -62,7 +70,6 @@ app.post("/todo", auth, async function (req, res) {
 
 });
 
-
 app.get("/todos", auth, function (req, res) {
     const userId = req.userId;
     const todos = TodoModel.find({ userId: userId });
@@ -70,18 +77,8 @@ app.get("/todos", auth, function (req, res) {
     res.json({
         todos: todos,
     });
-
 });
 
-function auth(req, res, next) {
-    const token = req.headers.token;
-    const decodedData = jwt.verify(token, JWT_SECRET);
-    if (decodedData) {
-        req.userId = decodedData.id;
-        next();
-    } else {
-        res.status(401).json({ message: "Unauthorized token" });
-    }
-}
+
 
 app.listen(3000);
