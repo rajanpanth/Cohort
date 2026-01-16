@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const JWT_SECRET = "rajan"
 const bcrypt = require("bcrypt");
 const { auth } = require("./auth");
+const { z } = require("zod");
 // const mongoose = require("mongoose");
 mongoose.connect("mongodb+srv://rajanpantha:$$Rajan$$1@rajan.xogqz8j.mongodb.net/todo-app-database");
 
@@ -12,11 +13,25 @@ const app = express();
 app.use(express.json());
 
 app.post("/signup", async function (req, res) {
+
+    const requiredBody = z.object({
+        email: z.string().email(),
+        password: z.string().min(6),
+        name: z.string().min(2),
+    });
+const parseResult = requiredBody.safeParse(req.body);
+if(!parseResult.success){
+    return res.status(400).json({message: "Invalid request body"});
+}
+
     const email = req.body.email;
     const password = req.body.password;
     const name = req.body.name;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    let errorThrown = false;
+
+    try{
+ const hashedPassword = await bcrypt.hash(password, 10);
     console.log(hashedPassword);
 
     await UserModel.create({
@@ -24,8 +39,13 @@ app.post("/signup", async function (req, res) {
         password: hashedPassword,
         name: name
     })
-
-    res.json({ message: "User created successfully" });
+    }catch(e){
+        return res.status(500).json({message: "Error creating user"});
+        errorThrown = true;
+    }
+    if(!errorThrown){
+res.status(201).json({message: "User created successfully"});
+    }
 });
 
 
