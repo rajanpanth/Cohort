@@ -16,13 +16,17 @@ app.post("/signup", async function (req, res) {
 
     const requiredBody = z.object({
         email: z.string().email(),
-        password: z.string().min(6),
+        password: z.string().min(6).max(100).uppercase().regex(/[0-9]/),
         name: z.string().min(2),
     });
-const parseResult = requiredBody.safeParse(req.body);
-if(!parseResult.success){
-    return res.status(400).json({message: "Invalid request body"});
-}
+    const parseResult = requiredBody.safeParse(req.body);
+    if (!parseResult.success) {
+        return res.status(400).json({
+            message: "Invalid request body",
+            errors: parseResult.error.errors
+        });
+        return;
+    }
 
     const email = req.body.email;
     const password = req.body.password;
@@ -30,21 +34,21 @@ if(!parseResult.success){
 
     let errorThrown = false;
 
-    try{
- const hashedPassword = await bcrypt.hash(password, 10);
-    console.log(hashedPassword);
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        console.log(hashedPassword);
 
-    await UserModel.create({
-        email: email,
-        password: hashedPassword,
-        name: name
-    })
-    }catch(e){
-        return res.status(500).json({message: "Error creating user"});
+        await UserModel.create({
+            email: email,
+            password: hashedPassword,
+            name: name
+        })
+    } catch (e) {
+        return res.status(500).json({ message: "Error creating user" });
         errorThrown = true;
     }
-    if(!errorThrown){
-res.status(201).json({message: "User created successfully"});
+    if (!errorThrown) {
+        res.status(201).json({ message: "User created successfully" });
     }
 });
 
@@ -58,7 +62,7 @@ app.post("/signin", async function (req, res) {
         email: email,
     });
 
-    const passwordMatch = await bcrypt.compare(password, user.password); 
+    const passwordMatch = await bcrypt.compare(password, user.password);
 
     console.log(user);
 
