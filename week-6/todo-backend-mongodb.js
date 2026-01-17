@@ -1,108 +1,156 @@
+// Import the express, mongoose, jwt, bcrypt and zod modules
 const express = require("express");
-const { UserModel, TodoModel } = require("./db");
-const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
-const JWT_SECRET = "rajan"
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { auth } = require("./auth");
 const { z } = require("zod");
-// const mongoose = require("mongoose");
-mongoose.connect("mongodb+srv://rajanpantha:$$Rajan$$1@rajan.xogqz8j.mongodb.net/todo-app-database");
 
+// Import the UserModel and TodoModel from the db.js file
+const { UserModel, TodoModel } = require("./db");
+
+// Import the auth middleware function and JWT_SECRET from the auth.js file
+const { auth, JWT_SECRET } = require("./auth");
+
+// Create an instance of the express module
 const app = express();
+
+// Parse the JSON data using the express.json() middleware
 app.use(express.json());
 
-app.post("/signup", async function (req, res) {
+// Connect to the MongoDB database using the mongoose.connect() method
+mongoose.connect("mongodb+srv://100xdevs:WvaTca0509mb90YX@cluster0.ossjd.mongodb.net/todos-app-week-7-2");
 
-    const requiredBody = z.object({
-        email: z.string().email(),
-        password: z.string().min(6).max(100).uppercase().regex(/[0-9]/),
-        name: z.string().min(2),
+// Create a POST route for the signup endpoint
+app.post("/signup", async function (req, res) {
+    // Input Validation using Zod
+    const requireBody = z.object({
+        email: z.string().min(3).max(100).email(), // email is must be a string, min 3 characters, max 100 characters, and must be a valid email
+        password: z.string().min(3).max(100), // password is must be a string, min 3 characters, max 100 characters
+        name: z.string().min(3).max(100), // name is must be a string, min 3 characters, max 100 characters
     });
-    const parseResult = requiredBody.safeParse(req.body);
-    if (!parseResult.success) {
-        return res.status(400).json({
-            message: "Invalid request body",
-            errors: parseResult.error.errors
+
+    // Parse the request body using the requireBody.safeParse() method to validate the data format
+    const parseDataWithSuccess = requireBody.safeParse(req.body);
+
+    // If the data format is incorrect, send an error message to the client
+    if (!parseDataWithSuccess.success) {
+        return res.json({
+            message: "Incorrect data format",
+            error: parseDataWithSuccess.error,
         });
-        return;
     }
 
+    // Get the email, password, and name from the request body
     const email = req.body.email;
     const password = req.body.password;
     const name = req.body.name;
 
-    let errorThrown = false;
+    // Hash the password using the bcrypt.hash() method
+    const hashedPassword = await bcrypt.hash(password, 5);
+    // console.log(hashedPassword);
 
+    // Error handling for creating a new user
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        console.log(hashedPassword);
-
+        // Create a new user using the UserModel.create() method
         await UserModel.create({
             email: email,
             password: hashedPassword,
-            name: name
-        })
-    } catch (e) {
-        return res.status(500).json({ message: "Error creating user" });
-        errorThrown = true;
+            name: name,
+        });
+    } catch (error) {
+        // If the user already exists, send an error message to the client
+        return res.json({
+            message: "User already exists!",
+        });
     }
-    if (!errorThrown) {
-        res.status(201).json({ message: "User created successfully" });
-    }
+
+    // Send a response to the client
+    res.json({
+        message: "You are signed up!",
+    });
 });
 
-
+// Create a POST route for the signin endpoint
 app.post("/signin", async function (req, res) {
+    // Get the email and password from the request body
     const email = req.body.email;
     const password = req.body.password;
 
-    // Find user in the database
+    // Find the user with the given email
     const user = await UserModel.findOne({
         email: email,
     });
 
+    // If the user is not found, send an error message to the client
+    if (!user) {
+        return res.status(403).json({
+            message: "Invalid Credentials!",
+        });
+    }
+
+    // Compare the password with the hashed password using the bcrypt.compare() method
     const passwordMatch = await bcrypt.compare(password, user.password);
 
-    console.log(user);
+    // If the user password matches
+    if (passwordMatch) {
+        // Create a JWT token using the jwt.sign() method
+        const token = jwt.sign(
+            {
+                id: user._id.toString(),
+            },
+            JWT_SECRET
+        );
 
-    if (user && passwordMatch) {
-        const token = jwt.sign({
-            id: user._id.toString()
-        }, JWT_SECRET);
+        // Send the token to the client
         res.json({
-            token: token
+            token: token,
+            message: "You are signed in!",
         });
     } else {
-        res.status(401).json({ message: "Invalid credentials" });
+        // If the user is not found, send an error message to the client
+        res.status(403).json({
+            message: "Invalid Credentials!",
+        });
     }
 });
 
+// Create a POST route for the todo endpoint
 app.post("/todo", auth, async function (req, res) {
+    // Get the userId from the request object
     const userId = req.userId;
+
+    // Get the title, and done from the request body
     const title = req.body.title;
     const done = req.body.done;
+
+    // Create a new todo using the TodoModel.create() method
     await TodoModel.create({
-        title: title,
-        done: done,
-        userId
+        userId,
+        title,
+        done,
     });
 
+    // Send a response to the client
     res.json({
-        userId: userId
+        message: "Todo created",
     });
-
 });
 
-app.get("/todos", auth, function (req, res) {
+// Create a GET route for the todo endpoint
+app.get("/todo", auth, async function (req, res) {
+    // Get the userId from the request object
     const userId = req.userId;
-    const todos = TodoModel.find({ userId: userId });
 
+    // Find all the todos with the given userId
+    const todos = await TodoModel.find({
+        userId,
+    });
+
+    // Send the todos to the client
     res.json({
-        todos: todos,
+        todos,
     });
 });
 
-
-
+// Start the server on port 3000
 app.listen(3000);
