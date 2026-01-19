@@ -1,8 +1,9 @@
+require('dotenv').config()
 const mongoose = require("mongoose")
 const { Schema } = require("mongoose")
 const ObjectId = mongoose.ObjectId;
-console.log("connected to")
-mongoose.connect("mongodb+srv://rajanpantha:$$Rajan$$1@rajan.xogqz8j.mongodb.net/coursera-app");
+console.log("MONGO_URL:", process.env.MONGO_URL);
+mongoose.connect(process.env.MONGO_URL);
 
 
 const User = new Schema({
@@ -32,9 +33,6 @@ const Course = new Schema({
 const Purchase = new Schema({
     userId: ObjectId,
     courseId: ObjectId,
-    title: String,
-    purchased: Boolean,
-
 })
 
 const UserModel = mongoose.model('user', User);
